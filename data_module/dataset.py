@@ -27,11 +27,11 @@ class DrivingDataset(Dataset):
                 label = []
                 sample = []
                 for j in range(i, i + self.n):
-                    seq.append(raw_data[vehicle][j][2])
+                    seq.append(raw_data[vehicle][j])
                 for j in range(i + self.n, i + self.n + self.m):
-                    label.append(raw_data[vehicle][j][2])
+                    label.append(raw_data[vehicle][j])
                 for l in range(i + self.n + self.m, i + self.n + self.m + self.k):
-                    sample.append(raw_data[vehicle][l][2])
+                    sample.append(raw_data[vehicle][l])
                 self.set.append((tensor(seq, device=cuda0), tensor(label, device=cuda0), tensor(sample, device=cuda0)))
 
     def __getitem__(self, index):

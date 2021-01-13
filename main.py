@@ -3,7 +3,7 @@ from data_module.dataset import DrivingDataMadule
 from model.LSTM import LSTM
 from callbacks.lstm_callback import LSTMCallback
 
-datamodule = DrivingDataMadule('v0.1', 100, 600, 1000)
+datamodule = DrivingDataMadule('v0.1', 1000, 60, 100)
 
 # model = LSTM.load_from_checkpoint(
 #     "/home/sepehr/PycharmProjects/Neuropad/DAD/model/lightning_logs/version_31/checkpoints/checkpoint.ckpt"

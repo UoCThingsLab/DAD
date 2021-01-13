@@ -1,10 +1,10 @@
 import pytorch_lightning as pl
-from torch import nn, zeros, optim, device, cat
+from torch import nn, zeros, optim, device, cat, tensor
 
 
 class LSTM(pl.LightningModule):
 
-    def __init__(self, input_size=1, output_size=1, hidden_layer_size=100, look_ahead=3, *args, **kwargs):
+    def __init__(self, input_size=3, output_size=1, hidden_layer_size=100, look_ahead=3, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.look_ahead = look_ahead
         self.hidden_layer_size = hidden_layer_size
@@ -19,7 +19,7 @@ class LSTM(pl.LightningModule):
 
     def forward(self, batch):
         self.init_hidden()
-        encoder_outputs, self.hidden_cell = self.encoder(batch.view(5, 1, -1), self.hidden_cell)
+        encoder_outputs, self.hidden_cell = self.encoder(batch.view(5, -1, 3), self.hidden_cell)
         predictions = []
         lstm_input = encoder_outputs[-1]
         for i in range(0, self.look_ahead):
@@ -27,13 +27,14 @@ class LSTM(pl.LightningModule):
                                                       self.hidden_cell)
             lstm_input = lstm_out
             predictions.append(self.linear(lstm_out))
-        return predictions
+        return cat(predictions, 2)[0][0]
 
     def training_step(self, batch, batch_idx):
         self.init_hidden()
         x, y, _ = batch
         predictions = self(x)
-        loss = self.loss_function(cat(predictions, 2)[0][0], y[0])
+        loss = self.loss_function(predictions,
+                                  tensor([item[0].item() for item in y[0]], device=device('cuda')))
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
@@ -41,14 +42,13 @@ class LSTM(pl.LightningModule):
         self.init_hidden()
         x, y, z = batch
         predictions = self.forward(x)
-        loss = self.loss_function(cat(predictions, 2)[0][0], y[0])
+        loss = self.loss_function(predictions, tensor([item[0].item() for item in y[0]], device=device('cuda')))
         self.log('validation_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
     def test_step(self, batch, batch_idx):
         x, y, z = batch
         predictions = self.forward(x)
-        predictions = cat(predictions, 2)[0][0]
-        loss = self.loss_function(predictions, y[0])
+        loss = self.loss_function(predictions,tensor([item[0].item() for item in y[0]], device=device('cuda')))
         self.log('test_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         # if z.item() > 18:
         #     self.evaluation_data.append(
@@ -57,9 +57,8 @@ class LSTM(pl.LightningModule):
         self.evaluation_data.append((z.item(), loss.item()))
 
     def init_hidden(self):
-        cuda0 = device('cuda')
-        self.hidden_cell = (zeros(1, 1, self.hidden_layer_size, device=cuda0),
-                            zeros(1, 1, self.hidden_layer_size, device=cuda0))
+        self.hidden_cell = (zeros(1, 1, self.hidden_layer_size, device=device('cuda')),
+                            zeros(1, 1, self.hidden_layer_size, device=device('cuda')))
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=1e-3)
