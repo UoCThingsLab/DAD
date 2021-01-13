@@ -53,14 +53,14 @@ class DrivingDataMadule(pl.LightningDataModule):
     def train_dataloader(self):
         return DataLoader(DrivingDataset(
             config={'address': self.train_dataset_address, 'start': 0, 'end': self.train_len, 'n': 5, 'm': 3, 'k': 1}),
-            shuffle=True)
+            shuffle=True, num_workers=0, batch_size=1)
 
     def val_dataloader(self):
         return DataLoader(DrivingDataset(
             config={'address': self.train_dataset_address, 'start': self.train_len,
                     'end': self.train_len + self.validate_len, 'n': 5,
                     'm': 3,
-                    'k': 1}), shuffle=False)
+                    'k': 1}), shuffle=False, num_workers=0, batch_size=1)
 
     def test_dataloader(self):
         return DrivingDataset(
