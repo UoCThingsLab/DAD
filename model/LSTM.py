@@ -51,15 +51,17 @@ class LSTM(pl.LightningModule):
         # self.log('validation_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
     def test_step(self, batch, batch_idx):
+        self.init_hidden()
         x, y, z = batch
         predictions = self.forward(x)
-        loss = self.loss_function(predictions, tensor([item[0].detach() for item in y[0]], device=device('cuda')))
+        loss = self.loss_function(predictions,
+                                  tensor([item[0].detach() for item in y], device=device('cuda')))
         self.log('test_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         # if z.item() > 18:
         #     self.evaluation_data.append(
         #         f'{str(x)} - {str(y)} - {str(predictions)} - {str(z.item())} - {str(z.item() - 13.89)} - {str(loss.item())}')
         #     print(z.item(), loss.item())
-        self.evaluation_data.append((z.item(), loss.item()))
+        self.evaluation_data.append((z[0][0].item(), loss.item(),z[0][1].item()))
 
     def init_hidden(self):
         self.hidden_cell_1 = zeros(1, 1, self.hidden_layer_size, device=device('cuda'))

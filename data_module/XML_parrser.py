@@ -16,8 +16,8 @@ class XMLParser:
                 if float(elem.attrib['time']) >= end:
                     break
                 for vehicle in elem.iter('vehicle'):
-                    lead_car_speed = 1000
-                    lead_car_distance = 1000
+                    lead_car_speed = 30
+                    lead_car_distance = 100
                     attr = vehicle.attrib
                     for vehicle2 in elem.iter('vehicle'):
                         attr2 = vehicle2.attrib
@@ -27,7 +27,7 @@ class XMLParser:
                             lead_car_speed = float(attr2['speed'])
                     if attr['id'] not in vehicles:
                         vehicles[attr['id']] = []
-                    vehicles[attr['id']].append([float(attr['speed']), lead_car_distance, lead_car_speed])
+                    vehicles[attr['id']].append([float(attr['speed'])/30, lead_car_distance/100, lead_car_speed/30])
         return vehicles
 
 #
