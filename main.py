@@ -7,11 +7,12 @@ from callbacks.lstm_callback import LSTMCallback
 
 
 def main(hparams):
-    datamodule = DrivingDataMadule('v0.2', 100, 60, 100)
+    datamodule = DrivingDataMadule('v0.3', 63305, 100, 3600)
 
     model = LSTM.load_from_checkpoint(
-        "/home/sepehr/PycharmProjects/DAD/lightning_logs/version_2/checkpoints/epoch=90-step=380834.ckpt"
+        "/home/sepehr/PycharmProjects/DAD/lightning_logs/version_102/checkpoints/epoch=4-step=285513.ckpt"
     )
+
     # model = LSTM()
     trainer = pl.Trainer(gpus=-1, max_epochs=100, accelerator='dp', callbacks=[LSTMCallback()],
                          num_nodes=1)
