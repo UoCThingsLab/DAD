@@ -2,22 +2,31 @@ import os
 from argparse import ArgumentParser
 import pytorch_lightning as pl
 from data_module.dataset import DrivingDataMadule
-from model.LSTM import LSTM
+from model.LSTMEncoder import LSTMEncoder
 from callbacks.lstm_callback import LSTMCallback
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 
 def main(hparams):
-    datamodule = DrivingDataMadule('v0.3', 63305, 100, 3600)
+    datamodule = DrivingDataMadule('v0.3', 10000, 100, 5000)
 
-    model = LSTM.load_from_checkpoint(
-        "/home/sepehr/PycharmProjects/DAD/lightning_logs/version_102/checkpoints/epoch=4-step=285513.ckpt"
+    test = False
+    if test:
+        model = LSTMEncoder.load_from_checkpoint(
+            "/home/sepehr/PycharmProjects/DAD/lightning_logs/version_81/checkpoints/epoch=44-step=440956.ckpt"
+        )
+    else:
+        model = LSTMEncoder()
+
+    checkpoint_callback = ModelCheckpoint(
+        filename='LSTMEncoder--{v_num:02d}-{epoch:02d}-{validation_loss:.2f}-{train_loss:.2f}',
     )
-
-    # model = LSTM()
-    trainer = pl.Trainer(gpus=-1, max_epochs=100, accelerator='dp', callbacks=[LSTMCallback()],
+    trainer = pl.Trainer(gpus=-1, max_epochs=100, accelerator='dp', callbacks=[LSTMCallback(), checkpoint_callback],
                          num_nodes=1)
-    # trainer.fit(model=model, datamodule=datamodule)
-    trainer.test(model=model, test_dataloaders=datamodule.test_dataloader())
+    if test:
+        trainer.test(model=model, test_dataloaders=datamodule.test_dataloader())
+    else:
+        trainer.fit(model=model, datamodule=datamodule)
 
 
 if __name__ == '__main__':

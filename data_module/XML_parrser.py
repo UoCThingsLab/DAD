@@ -19,7 +19,7 @@ class XMLParser:
             elif len(l.split(' ')) < 6:
                 pass
             else:
-                d.append([float(i)/20 for i in l.split(' ')[0:5]])
+                d.append([float(i)for i in l.split(' ')[0:5]])
         return a
 
     def read_xml(self, start, end):
@@ -75,6 +75,7 @@ class XMLParser:
         if key == 'angle':
             return data / 360
         if key == 'speed':
-            return data / 20
+            # return data / 20
+            return data
         if key == 'lane':
             return 1 if data == lane else 0
