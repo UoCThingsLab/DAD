@@ -19,7 +19,7 @@ class XMLParser:
             elif len(l.split(' ')) < 6:
                 pass
             else:
-                d.append(([[float(j) for j in i.split(',')] for i in l.split(' ')[0:5]], float(l.split(' ')[5])))
+                d.append(([float(i) for i in l.split(' ')[0:5]], float(l.split(' ')[5])))
         return a
 
     def read_xml(self, start, end):

@@ -22,7 +22,7 @@ sumoCmd = [sumoBinary, "-c", "/home/sepehr/PycharmProjects/DAD/simulation/simula
 # ).cuda()
 traci.start(sumoCmd)
 step = 0
-f = open('../dataset/v0.4/abnormal.output', 'w')
+f = open('../dataset/v0.4/abnormal2.output', 'w')
 anm = ''
 d = [[], [], [], [], []]
 id = 0
@@ -32,8 +32,7 @@ while step < 100000:
     if len(traci.vehicle.getIDList()) == 5:
         l = ''
         for i in traci.vehicle.getIDList():
-            l += str(traci.vehicle.getSpeed(i)) + ',' + str(traci.vehicle.getPosition(i)[0]) + ',' + str(
-                traci.vehicle.getPosition(i)[1]) + ' '
+            l += str(traci.vehicle.getSpeed(i)) + ' '
         l += str(max_speed) + '\n'
         f.write(l)
         anm = ''
@@ -73,7 +72,7 @@ while step < 100000:
         ids = traci.vehicle.getIDList()
         traci.vehicle.highlight(ids[id])
         traci.vehicle.setSpeedMode(ids[id], 0)
-        traci.vehicle.setSpeedFactor(ids[id], traci.vehicle.getSpeedFactor(ids[id]) + 0.1)
+        traci.vehicle.setSpeedFactor(ids[id], traci.vehicle.getSpeedFactor(ids[id]) - 0.1)
         # traci.vehicle.setSpeed(ids[id], traci.vehicle.getSpeed(ids[id]) + 3)
 
     step += 1

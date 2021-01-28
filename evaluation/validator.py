@@ -23,8 +23,8 @@ class Validator:
     # self.ROC = classification.ROC(pos_label=1)
 
     def test(self, data):
-        speed_err = 0
-        error = 0.05;
+        speed_err = -1
+        error = 0.05
         tpr = []
         fpr = []
         best = (0, {})
@@ -34,7 +34,7 @@ class Validator:
             for record in data:
                 d, e = record
                 pred.append(1 if d > error else 0)
-                y.append(1 if e > speed_err else 0)
+                y.append(1 if e < speed_err else 0)
             error -= 0.0001
 
             pred = tensor(pred)

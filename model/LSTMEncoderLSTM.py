@@ -7,20 +7,19 @@ class LSTMEncoderLSTM(LSTM):
     def __init__(self, input_size=5, hidden_layer_size=100, battle_neck=15, *args, **kwargs):
         super().__init__(hidden_layer_size, *args, **kwargs)
         self.LSTM1 = nn.LSTM(input_size, hidden_layer_size)
-        self.encoder1 = nn.Linear(300, battle_neck)
+        self.encoder1 = nn.Linear(hidden_layer_size, battle_neck)
         self.LSTM2 = nn.LSTM(battle_neck, hidden_layer_size)
         self.encoder2 = nn.Linear(hidden_layer_size, input_size)
+        self.register_buffer("hidden_cell_1", zeros(1, 1, self.hidden_layer_size, device=device('cuda')))
+        self.register_buffer("hidden_cell_2", zeros(1, 1, self.hidden_layer_size, device=device('cuda')))
 
     def forward(self, batch):
-        hidden_cell_1 = zeros(1, 3, self.hidden_layer_size, device=device('cuda'))
-        hidden_cell_2 = zeros(1, 3, self.hidden_layer_size, device=device('cuda'))
-        encoder_outputs, (_, _) = self.LSTM1(batch[0],
-                                             (hidden_cell_1, hidden_cell_2))
-        encoded = self.encoder1(encoder_outputs[-1].view(300))
-        hidden_cell_1 = zeros(1, 1, self.hidden_layer_size, device=device('cuda'))
-        hidden_cell_2 = zeros(1, 1, self.hidden_layer_size, device=device('cuda'))
-        decoder_outputs, (_, _) = self.LSTM2(encoded.view(1, 1, 15),
-                                             (hidden_cell_1, hidden_cell_2))
+        self.init_hidden()
+        encoder_outputs, (_, _) = self.LSTM1(batch.view(5, 1, 5),
+                                             (self.hidden_cell_1, self.hidden_cell_2))
+        encoded = self.encoder1(encoder_outputs[-1].view(1, 1, 100))
+        decoder_outputs, hidden_cell = self.LSTM2(encoded.view(1, 1, 15),
+                                                  (self.hidden_cell_1, self.hidden_cell_2))
         decoded = self.encoder2(decoder_outputs[-1].view(1, 1, 100))
         return decoded
 
@@ -37,7 +36,7 @@ class LSTMEncoderLSTM(LSTM):
         return loss
 
     def test_step(self, batch, batch_idx):
-        output = self([batch[0]])
+        output = self(batch[0])
         for i in range(0, 5):
             loss = self.loss_function(output[0][0][i], batch[1].view(1, 5)[0][i])
             speed = batch[1].view(1, 5)[0][i]

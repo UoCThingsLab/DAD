@@ -18,7 +18,7 @@ def main(hparams):
     test = True
     if test:
         model = LSTMEncoderLSTM.load_from_checkpoint(
-            "/home/sepehr/PycharmProjects/DAD/lightning_logs/version_56/checkpoints/LSTMEncoderLSTM--v_num=00-epoch=99-validation_loss=0.00-train_loss=0.00.ckpt"
+            "/home/sepehr/PycharmProjects/DAD/lightning_logs/version_54/checkpoints/LSTMEncoderLSTM--v_num=00-epoch=99-validation_loss=0.00-train_loss=0.00.ckpt"
         )
     else:
         model = LSTMEncoderLSTM()

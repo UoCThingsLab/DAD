@@ -26,31 +26,17 @@ class DrivingDataset(Dataset):
                 seq = []
                 label = 0
                 for j in range(i, i + self.n):
-                    seq.append(
-                        [
-                            [round[j][0][k][0] / 20
-                             for
-                             k in range(0, 5)],
-                            [
-                                (round[j][0][k][1] + 41.12) / 965.07
-                                for
-                                k in range(0, 5)
-                            ],
-                            [(round[j][0][k][2] / 50.60)
-                             for
-                             k in range(0, 5)]
-
-                        ])
-
-                label = [round[i + self.n + self.m][0][k][0] / 20 for
-                         k in range(0, 5)]
+                    seq.append(round[j][0])
+                label = round[i + self.n + self.m][0]
                 seq = tensor(seq, device=cuda0)
+                seq /= 20
                 # mean, std = seq.mean(), seq.std()
                 # seq = seq - mean
                 # seq = seq / std
 
                 an = round[i + self.n + self.m][1]
                 label = tensor(label, device=cuda0)
+                label /= 20
                 # mean, std = label.mean(), label.std()
                 # label = label - mean
                 # label = label / std
@@ -68,7 +54,7 @@ class DrivingDataMadule(pl.LightningDataModule):
     def __init__(self, version, train_len, validate_len, test_len):
         super().__init__()
         self.train_dataset_address = os.path.realpath('.') + f'/dataset/{version}/normal.output'
-        self.test_dataset_address = os.path.realpath('.') + f'/dataset/{version}/abnormal.output'
+        self.test_dataset_address = os.path.realpath('.') + f'/dataset/{version}/abnormal2.output'
         self.train_len = train_len
         self.validate_len = validate_len
         self.test_len = test_len

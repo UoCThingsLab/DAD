@@ -13,8 +13,8 @@ class LSTMCallback(Callback):
         f3 = open(os.path.realpath('.') + '/evaluation-ab2.log', 'w')
         for ev in pl_module.evaluation_data:
             f.write(str(ev[0]) + ',' + str(ev[1]) + '\n')
-            if ev[1] > 0:
+            if ev[1] < 0:
                 f2.write(str(ev[0]) + ',' + str(ev[1]) + '\n')
-            if ev[0] > 0.0017999999 and ev[1] < 0:
+            if ev[0] > 0.0017999999:
                 f3.write(str(ev[0]) + ',' + str(ev[1]) + '\n')
         # Validator(pl_module.evaluation_data, ['speed'])
