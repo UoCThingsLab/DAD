@@ -9,30 +9,21 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
 
 def main(hparams):
-    datamodule = DrivingDataMadule('v0.3', 39000, 1300, 1000)
+    datamodule = DrivingDataMadule('v0.1', 39000, 1300, 1000)
 
-    test = False
+    for i in range(5,15):
+    
+        model =  Siamese(battle_neck = i)
 
-
-    if test:
-        model = Siamese.load_from_checkpoint(
-            "/home/sepehr/PycharmProjects/DAD/lightning_logs/version_0/checkpoints/LSTMEncoderLSTM--v_num=00-epoch=00-validation_loss=0.14126-train_loss=0.00000.ckpt"
+        checkpoint_callback = ModelCheckpoint(
+            monitor='validation_loss',
+            filename=str(i) + '-{v_num:02d}-{epoch:02d}-{validation_loss:.5f}-{train_loss:.5f}',
         )
-    else:
-        model = Siamese()
+        early_callback = EarlyStopping(monitor='validation_loss')
 
-    checkpoint_callback = ModelCheckpoint(
-        monitor='validation_loss',
-        filename='LSTMEncoderLSTM--{v_num:02d}-{epoch:02d}-{validation_loss:.5f}-{train_loss:.5f}',
-    )
-    early_callback = EarlyStopping(monitor='validation_loss')
-
-    trainer = pl.Trainer(gpus=-1, max_epochs=100, accelerator='dp',
+        trainer = pl.Trainer(gpus=-1, max_epochs=100, accelerator='dp',
                          callbacks=[LSTMCallback(), checkpoint_callback, early_callback],
                          num_nodes=1)
-    if test:
-        trainer.test(model=model, test_dataloaders=datamodule.test_dataloader())
-    else:
         trainer.fit(model=model, datamodule=datamodule)
 
 
