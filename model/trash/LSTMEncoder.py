@@ -1,5 +1,5 @@
-from torch import nn, zeros, optim, device, cat, tensor, mean
-from model.LSTM import LSTM
+from torch import nn, zeros, device
+from model.trash.LSTM import LSTM
 
 
 class LSTMEncoder(LSTM):

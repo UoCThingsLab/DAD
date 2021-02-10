@@ -1,10 +1,8 @@
 import os
 
-import pytorch_lightning as pl
-from torch import tensor, device
+from torch import tensor
 from pytorch_lightning.metrics.functional.classification import stat_scores
 import matplotlib.pyplot as plt
-from model import LSTMEncoder
 from pytorch_lightning import metrics
 
 
@@ -24,11 +22,11 @@ class Validator:
 
     def test(self, data):
         speed_err = 0
-        error = 0.05;
+        error = 0.2
         tpr = []
         fpr = []
         best = (0, {})
-        while error >= -0.00001:
+        while error >= 0:
             pred = []
             y = []
             for record in data:

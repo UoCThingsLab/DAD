@@ -1,81 +1,114 @@
-from torch import nn, zeros, optim, device, cat, tensor, mean, max
-from model.LSTM import LSTM
+from torch import nn, zeros, device, cat, tensor
+from model.trash.LSTM import LSTM
 
 
 class Siamese(LSTM):
-    def __init__(self, input_size=1, hidden_layer_size=100, bottle_neck=15, *args, **kwargs):
-        super().__init__(hidden_layer_size, *args, **kwargs)
-        self.LSTM1 = nn.LSTM(input_size, hidden_layer_size)
-        self.endocer = nn.Linear(hidden_layer_size, bottle_neck)
-        self.decoder = nn.Linear(bottle_neck, hidden_layer_size)
-        self.LSTM2 = nn.LSTM(hidden_layer_size, hidden_layer_size)
-        self.decoder2 = nn.Linear(hidden_layer_size, input_size)
-        self.register_buffer("hidden_cell_1", zeros(1, 1, self.hidden_layer_size, device=device('cuda')))
-        self.register_buffer("hidden_cell_2", zeros(1, 1, self.hidden_layer_size, device=device('cuda')))
-        self.init_hidden()
+    def __init__(self, hidden_layer_size=100, battle_neck=7, feature_len=6, observe_len=5, label_len=1,
+                 objects_len=5,
+                 d=device('cuda'), *args,
+                 **kwargs):
+        super().__init__(hidden_layer_size, device, *args, **kwargs)
+        self.LSTM1 = nn.LSTM(feature_len, hidden_layer_size)
+        self.encoder1 = nn.Linear(hidden_layer_size, battle_neck)
+        self.LSTM2 = nn.LSTM(battle_neck, hidden_layer_size)
+        self.encoder2 = nn.Linear(hidden_layer_size, feature_len)
+        self.battle_neck = battle_neck
+        self.feature_len = feature_len
+        self.hidden_layer_size = hidden_layer_size
+        self.d = d
+        self.observe_len = observe_len
+        self.label_len = label_len
+        self.objects_len = objects_len
+        self.similarity = nn.CosineSimilarity(dim=0, eps=1e-6)
 
     def forward(self, batch):
-        output = []
-        for i in range(0, 5):
-            self.init_hidden()
-            input = tensor([batch.view(25)[5 * j + i] for j in range(0, 5)], device=device('cuda'))
-            LSTM1_outputs, (_, _) = self.LSTM1(input.view(5, 1, 1),
-                                               (self.hidden_cell_1, self.hidden_cell_2))
-            encoded = self.endocer(LSTM1_outputs[-1])
-            LSTM_input = self.decoder(encoded)
-            LSTM2_outputs = []
-            for i in range(0, 5):
-                LSTM2_output, (self.hidden_cell_1, self.hidden_cell_2) = \
-                    self.LSTM2(LSTM_input.view(1, 1, 100), (self.hidden_cell_1, self.hidden_cell_2))
-                LSTM_input = LSTM2_output[-1]
-                LSTM2_outputs.append(self.decoder2(LSTM2_output))
-            output.append(cat(LSTM2_outputs))
+        # LSTM 1
+        h1, h2 = self.init_hidden()
+        encoder_outputs, (_, _) = self.LSTM1(batch.view(self.observe_len, 1, self.feature_len),
+                                             (h1, h2))
 
-        return [cat([output[i][j][0] for j in range(0, 5)]) for i in range(0, 5)]
+        # Encoder 1
+        encoded = self.encoder1(encoder_outputs[-1])
+        encoded = encoded.view(1, 1, self.battle_neck)
+        # LSTM 2
+        h1, h2 = self.init_hidden()
+        output = []
+        for i in range(0, self.observe_len):
+            LSTM_output, (h1, h2) = self.LSTM2(encoded, (h1, h2))
+            LSTM_output = LSTM_output[-1].view(1, 1, self.hidden_layer_size)
+            # Encode 2
+            decoded = self.encoder2(LSTM_output)
+            output.append(decoded)
+        return output, encoded
+
+    def get_loss(self, x, y):
+        return self.loss_function(x, y)
 
     def training_step(self, batch, batch_idx):
-        output = self(batch[0])
-        loss1 = 0
+        loss = 0
+        decoded = []
+        for j in range(0, self.observe_len):
+            list = [[batch[0][0][i][k][j].item() for k in range(0, self.feature_len)] for i in
+                    range(0, self.observe_len)]
+            list = tensor(list, device=self.d)
+            output, d = self(list)
+            decoded.append(d[0][0])
+            output = cat(output).view(self.feature_len * self.observe_len)
+            list = list.view(self.feature_len * self.observe_len)
+            loss += self.get_loss(output, list)
         loss2 = 0
-        inputs = []
-        for i in range(0, 5):
-            input = tensor([batch[0].view(25)[5 * j + i] for j in range(0, 5)], device=device('cuda'))
-            loss1 += self.loss_function(output[i], input)
-            inputs.append(input)
-        for i in range(0, 5):
-            for j in range(0, 5):
-                loss2 += self.loss_function(inputs[i], inputs[j])
-        loss = (loss1 + loss2) / 5
+        for i in range(0, self.objects_len):
+            for j in range(0, self.objects_len):
+                if i != j:
+                    l = self.similarity(decoded[i], decoded[j])
+                    l = (-1 * l) + 1
+                    loss2 += l
+        loss = loss2 + (10 * loss)
         self.log('train_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        output = self(batch[0])
-        loss1 = 0
+        loss = 0
+        decoded = []
+        for j in range(0, self.observe_len):
+            list = [[batch[0][0][i][k][j].item() for k in range(0, self.feature_len)] for i in
+                    range(0, self.observe_len)]
+            list = tensor(list, device=self.d)
+            output, d = self(list)
+            decoded.append(d[0][0])
+            output = cat(output).view(self.feature_len * self.observe_len)
+            list = list.view(self.feature_len * self.observe_len)
+            loss += self.get_loss(output, list)
         loss2 = 0
-        inputs = []
-        for i in range(0, 5):
-            input = tensor([batch[0].view(25)[5 * j + i] for j in range(0, 5)], device=device('cuda'))
-            loss1 += self.loss_function(output[i], input)
-            inputs.append(input)
-        for i in range(0, 5):
-            for j in range(0, 5):
-                loss2 += self.loss_function(inputs[i], inputs[j])
-        loss = (loss1 + loss2) / 5
+        for i in range(0, self.objects_len):
+            for j in range(0, self.objects_len):
+                if i != j:
+                    l = self.similarity(decoded[i], decoded[j])
+                    l = (-1 * l) + 1
+                    loss2 += l
+        loss = loss2 + (10 * loss)
         self.log('validation_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def test_step(self, batch, batch_idx):
-        output = self(batch[0])
-        max_e, max_s = 0, 0
-        inputs = []
-        for i in range(0, 5):
-            input = tensor([batch[0].view(25)[5 * j + i] for j in range(0, 5)], device=device('cuda'))
-            inputs.append(input)
-        for i in range(0, 5):
-            for j in range(0, 5):
-                if self.loss_function(output[i], output[j]) > max_e:
-                    max_e = self.loss_function(output[i], output[j])
-                    max_s = max(inputs[i], inputs[j])
-        self.log('test_loss', max_e, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-        self.evaluation_data.append((max_e, 1 if max_s * 20 > 14 else 0))
+        decoded = []
+        maxSpeed = []
+
+        for j in range(0, self.objects_len):
+            list = [[batch[0][0][i][k][j].item() for k in range(0, self.feature_len)] for i in
+                    range(0, self.observe_len)]
+            list = tensor(list, device=self.d)
+            o, d = self(list)
+            m = max(batch[1][0][j]).item()
+            maxSpeed.append(m)
+            decoded.append(d)
+        for i in range(0, self.objects_len):
+            loss = 0
+            for j in range(0, self.objects_len):
+                if i != j:
+                    l = self.similarity(decoded[i][0][0], decoded[j][0][0])
+                    loss += (-1 * l) + 1
+            loss /= 4
+            self.evaluation_data.append(
+                (loss.item(), ((maxSpeed[i] * (batch[3] - batch[4])) + batch[4] - batch[2]).item()))
+            # self.evaluation_data.append((loss.item(), 1 if batch[2].item() == i else 0))
