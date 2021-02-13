@@ -104,9 +104,6 @@ class DrivingDataset(Dataset):
                 label = [[], [], [], [], []]
                 for j in range(i, i + self.observe_len):
                     seq.append([
-                        # [self.normalize(round[j][0][k][self.speed_index], max_speed, min_speed) for k in
-                        #  range(0, self.num_objects)],
-                        # speed
                         [self.normalize((round[j][0][k][self.x_index] - round[j - 1][0][k][self.x_index]) - (
                                 round[j - 1][0][k][self.x_index] - round[j - 2][0][k][self.x_index]), max_dd_x,
                                         min_dd_x)
@@ -132,11 +129,6 @@ class DrivingDataset(Dataset):
                         [self.normalize(round[j][0][k][self.y_index], max_y, min_y)
                          for k in
                          range(0, self.num_objects)],
-
-                        # y
-                        # [round[j][0][k][self.l_index] + 1 for k in
-                        #  range(0, self.num_objects)],
-                        # l
                     ])
                     for k in range(0, 5):
                         label[k].append(self.normalize(round[j][0][k][self.speed_index], max_speed, min_speed))

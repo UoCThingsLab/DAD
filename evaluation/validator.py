@@ -21,8 +21,8 @@ class Validator:
     # self.ROC = classification.ROC(pos_label=1)
 
     def test(self, data):
-        speed_err = 0
-        error = 0.2
+        speed_err = 1
+        error = 0.02
         tpr = []
         fpr = []
         best = (0, {})

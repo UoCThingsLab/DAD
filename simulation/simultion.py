@@ -20,7 +20,7 @@ sumoCmd = [sumoBinary, "-c", "/home/sepehr/PycharmProjects/DAD/simulation/config
 # ).cuda()
 traci.start(sumoCmd)
 step = 0
-f = open('../dataset/v0.3/normal.output', 'w')
+f = open('../dataset/v0.5/normal.output', 'w')
 anm = ''
 x = []
 y = []
@@ -50,8 +50,8 @@ while step < 100000:
         for i in traci.vehicle.getIDList():
             l += str(traci.vehicle.getSpeed(i)) + ',' + str(traci.vehicle.getPosition(i)[0]) + ',' + str(
                 traci.vehicle.getPosition(i)[1]) + ',' + str(traci.vehicle.getLaneIndex(i)) + ' '
-        l += str(id if flag else -1) + '\n'
-        # l += str(max_speed) + '\n'
+        # l += str(id if flag else -1) + '\n'
+        l += str(max_speed) + '\n'
         f.write(l)
         anm = ''
         s.append([traci.vehicle.getSpeed(traci.vehicle.getIDList()[i]) for i in range(0, 5)])
@@ -103,10 +103,10 @@ while step < 100000:
         x = []
         y = []
         s = []
-    if len(traci.vehicle.getIDList()) == 5 and ple != int(((step % 100) - (step % 10)) / 10 % 5):
-        ple = int(((step % 100) - (step % 10)) / 10 % 5)
-        ids = traci.vehicle.getIDList()
-        traci.vehicle.changeLane(ids[ple], (traci.vehicle.getLaneIndex(ids[id]) + 1 + random.randint(0, 1)) % 3, 2)
+    # if len(traci.vehicle.getIDList()) == 5 and ple != int(((step % 100) - (step % 10)) / 10 % 5):
+    #     ple = int(((step % 100) - (step % 10)) / 10 % 5)
+    #     ids = traci.vehicle.getIDList()
+    #     traci.vehicle.changeLane(ids[ple], (traci.vehicle.getLaneIndex(ids[id]) + 1 + random.randint(0, 1)) % 3, 2)
     # if step % 3 == 0 and len(traci.vehicle.getIDList()) == 5:
     #     ids = traci.vehicle.getIDList()
     #     traci.vehicle.setColor(ids[id], (255, 0, 0))
@@ -119,10 +119,4 @@ while step < 100000:
     #     traci.vehicle.setSpeedMode(ids[id], 0)
     #     traci.vehicle.setSpeedFactor(ids[id], traci.vehicle.getSpeedFactor(ids[id]) + 0.1)
     # # traci.vehicle.setSpeed(ids[id], traci.vehicle.getSpeed(ids[id]) + 3)
-    # if step % 100 == 25 and len(traci.vehicle.getIDList()) == 5:
-    #     ids = traci.vehicle.getIDList()
-    #     traci.vehicle.setColor(ids[id], (0, 255, 255))
-    #     traci.vehicle.setSpeedMode(ids[id], 0)
-    #     traci.vehicle.setSpeedFactor(ids[id], traci.vehicle.getSpeedFactor(ids[id]) - 0.1)
-    # traci.vehicle.setSpeed(ids[id], traci.vehicle.getSpeed(ids[id]) + 3)
     step += 1

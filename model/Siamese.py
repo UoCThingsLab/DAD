@@ -3,7 +3,7 @@ from model.trash.LSTM import LSTM
 
 
 class Siamese(LSTM):
-    def __init__(self, hidden_layer_size=100, battle_neck=7, feature_len=6, observe_len=5, label_len=1,
+    def __init__(self, hidden_layer_size=100, battle_neck=12, feature_len=6, observe_len=5, label_len=1,
                  objects_len=5,
                  d=device('cuda'), *args,
                  **kwargs):
@@ -47,7 +47,7 @@ class Siamese(LSTM):
     def training_step(self, batch, batch_idx):
         loss = 0
         decoded = []
-        for j in range(0, self.observe_len):
+        for j in range(0, self.objects_len):
             list = [[batch[0][0][i][k][j].item() for k in range(0, self.feature_len)] for i in
                     range(0, self.observe_len)]
             list = tensor(list, device=self.d)
@@ -70,7 +70,7 @@ class Siamese(LSTM):
     def validation_step(self, batch, batch_idx):
         loss = 0
         decoded = []
-        for j in range(0, self.observe_len):
+        for j in range(0, self.objects_len):
             list = [[batch[0][0][i][k][j].item() for k in range(0, self.feature_len)] for i in
                     range(0, self.observe_len)]
             list = tensor(list, device=self.d)

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on Wed 10 Feb 2021 04:18:39 PM MST by Eclipse SUMO netedit Version 1.8.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+    <input>
+        <sumo-net-file value="/home/sepehr/PycharmProjects/DAD/simulation/config/network2.xml"/>
+    </input>
+
+    <output>
+        <output-file value="/home/sepehr/PycharmProjects/DAD/simulation/config/network2.xml"/>
+    </output>
+
+    <processing>
+        <geometry.min-radius.fix.railways value="false"/>
+        <geometry.max-grade.fix value="false"/>
+        <offset.disable-normalization value="true"/>
+        <lefthand value="false"/>
+    </processing>
+
+    <junctions>
+        <no-internal-links value="true"/>
+        <no-turnarounds value="true"/>
+        <junctions.corner-detail value="5"/>
+        <junctions.limit-turn-speed value="5.5"/>
+        <rectangular-lane-cut value="false"/>
+    </junctions>
+
+    <pedestrian>
+        <walkingareas value="false"/>
+    </pedestrian>
+
+    <report>
+        <aggregate-warnings value="5"/>
+    </report>
+
+</configuration>
+-->
+
+<net version="1.6" junctionCornerDetail="5" limitTurnSpeed="5.50" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/net_file.xsd">
+
+    <location netOffset="0.00,0.00" convBoundary="26.46,259.89,455.56,525.63" origBoundary="-10000000000.00,-10000000000.00,10000000000.00,10000000000.00" projParameter="!"/>
+
+    <edge id="gneE0" from="end" to="start" priority="-1">
+        <lane id="gneE0_0" index="0" speed="13.89" length="504.72" shape="30.67,253.09 459.77,518.83"/>
+        <lane id="gneE0_1" index="1" speed="13.89" length="504.72" shape="28.99,255.81 458.09,521.55"/>
+        <lane id="gneE0_2" index="2" speed="13.89" length="504.72" shape="27.30,258.53 456.40,524.27"/>
+    </edge>
+
+    <junction id="end" type="dead_end" x="26.46" y="259.89" incLanes="" intLanes="" shape="26.46,259.89 31.51,251.73"/>
+    <junction id="start" type="dead_end" x="455.56" y="525.63" incLanes="gneE0_0 gneE0_1 gneE0_2" intLanes="" shape="460.61,517.47 455.56,525.63"/>
+
+</net>
