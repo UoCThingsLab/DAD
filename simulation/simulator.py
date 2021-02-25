@@ -16,64 +16,84 @@ import matplotlib.pyplot as plt
 
 class Simulator:
 
-    def __init__(self, address='../dataset/v0.1/abnormal.output', w=True):
+    def __init__(self, address='../dataset/v0.1/normal.output', w=True):
         self.step = 0
         self.end = 100000
         sumoBinary = "sumo-gui"
-        sumoCmd = [sumoBinary, "-c", "downtown/osm.sumocfg", "--seed", '1']
+        sumoCmd = [sumoBinary, "-c", "/home/sepehr/PycharmProjects/DAD/simulation/config/simulation.xml", "--seed", '1']
         traci.start(sumoCmd)
 
         self.id = 0
-
+        self.flag = False
         self.w = w
         if self.w:
             self.file = open(address, 'w')
-            self.s = []
-            self.x = []
-            self.y = []
-        self.model = Siamese.load_from_checkpoint(
-            "../checkpoint/LSTMEncoderLSTM--v_num=00-epoch=00-validation_loss=0.53419-train_loss=0.00000.ckpt"
-        ).cuda()
+            self.s = [[], [], [], [], []]
+            self.x = [[], [], [], [], []]
+            self.y = [[], [], [], [], []]
+        # self.model = Siamese.load_from_checkpoint(
+        #     "../checkpoint/LSTMEncoderLSTM--v_num=00-epoch=00-validation_loss=0.53419-train_loss=0.00000.ckpt"
+        # ).cuda()
+        self.round = -1
         self.similarity = nn.CosineSimilarity(dim=0, eps=1e-6)
+        self.max_speed = 0
         self.run()
 
     def init_variables(self):
         if self.step % 200 == 0:
-            self.id = random.randint(0, 4)
-            self.s = []
-            self.x = []
-            self.y = []
             if self.w:
-                self.file.write('\n')
+                self.write()
+            self.round += 1
+            self.id = 4
+            self.s = [[], [], [], [], []]
+            self.x = [[], [], [], [], []]
+            self.y = [[], [], [], [], []]
+            self.max_speed = 0
+            self.flag = False
 
     def write(self):
-        if len(traci.vehicle.getIDList()) == 5:
-            max_speed = 100
-            if traci.vehicle.getTypeID(traci.vehicle.getIDList()[0]) == 'veh_passenger1':
-                max_speed = 13.89 * 1.4
-            elif traci.vehicle.getTypeID(traci.vehicle.getIDList()[0]) == 'veh_passenger2':
-                max_speed = 13.89 * 1
-            elif traci.vehicle.getTypeID(traci.vehicle.getIDList()[0]) == 'veh_passenger3':
-                max_speed = 13.89 * 0.6
-            # elif traci.vehicle.getTypeID(traci.vehicle.getIDList()[0]) == 'veh_passenger4':
-            #     max_speed = 13.89 * 0.7
-            # elif traci.vehicle.getTypeID(traci.vehicle.getIDList()[0]) == 'veh_passenger5':
-            #     max_speed = 13.89 * 0.6
-
+        for i in range(0, 5):
             l = ''
-            for i in traci.vehicle.getIDList():
-                l += str(traci.vehicle.getSpeed(i)) + ',' + str(traci.vehicle.getPosition(i)[0]) + ',' + str(
-                    traci.vehicle.getPosition(i)[1]) + ',' + str(traci.vehicle.getLaneIndex(i)) + ' '
-            # l += str(id if flag else -1) + '\n'
-            l += str(max_speed) + '\n'
+            for j in range(2, len(self.x[i])):
+                dx = self.x[i][j] - self.x[i][j - 1]
+                dx2 = self.x[i][j - 1] - self.x[i][j - 2]
+                l += f'{round(self.x[i][j], 3)},{round(dx, 4)},{round(dx2 - dx, 4)},{round(self.y[i][j], 3)},{round(self.s[i][j], 2)} '
+            plt.plot(range(0, len(self.s[i][:10])), self.s[i][:10])
             self.file.write(l)
-            self.s.append([traci.vehicle.getSpeed(traci.vehicle.getIDList()[i]) for i in range(0, 5)])
-            self.x.append(
-                [(traci.vehicle.getPosition(traci.vehicle.getIDList()[i])[0] + 41.12) / (965.07 + 41.12) for i in
-                 range(0, 5)])
-            self.y.append(
-                [(traci.vehicle.getPosition(traci.vehicle.getIDList()[i])[1] - 44.20) / (50.60 - 44.20) for i in
-                 range(0, 5)])
+            self.file.write(';')
+            self.file.write(f'{self.max_speed}')
+            self.file.write('\n')
+        # plt.show()
+
+    def log(self):
+
+        if len(traci.vehicle.getIDList()) > 0:
+            if traci.vehicle.getTypeID(traci.vehicle.getIDList()[0]) == 'veh_passenger1':
+                self.max_speed = 13.89 * 1
+            elif traci.vehicle.getTypeID(traci.vehicle.getIDList()[0]) == 'veh_passenger2':
+                self.max_speed = 13.89 * 0.8
+            elif traci.vehicle.getTypeID(traci.vehicle.getIDList()[0]) == 'veh_passenger3':
+                self.max_speed = 13.89 * 0.6
+
+        for i in range(0, 5):
+            id = f'veh{self.round * 10 + i}'
+            if id in traci.vehicle.getIDList():
+                x = traci.vehicle.getPosition(id)[0]
+                y = traci.vehicle.getPosition(id)[1]
+                s = traci.vehicle.getSpeed(id)
+                if 300 >= x >= 100:
+                    self.x[i].append((x - 100) / 200)
+                    self.y[i].append((y - 292.0) / 6.4)
+                    if s > 0.001:
+                        self.s[i].append(s)
+                    else:
+                        self.s[i].append(0)
+                # self.x.append(
+                #     [(traci.vehicle.getPosition(traci.vehicle.getIDList()[i])[0] + 41.12) / (965.07 + 41.12) for i in
+                #      range(0, 5)])
+                # self.y.append(
+                #     [(traci.vehicle.getPosition(traci.vehicle.getIDList()[i])[1] - 44.20) / (50.60 - 44.20) for i in
+                #      range(0, 5)])
 
     def over_speed(self):
         if self.step % 100 == 20 and len(traci.vehicle.getIDList()) == 5:
@@ -83,14 +103,15 @@ class Simulator:
             traci.vehicle.setSpeedFactor(ids[self.id], traci.vehicle.getSpeedFactor(ids[self.id]) + 0.2)
 
     def under_speed(self):
-        if self.step % 100 == 20 and len(traci.vehicle.getIDList()) == 5:
+        if len(traci.vehicle.getIDList()) == 5:
             ids = traci.vehicle.getIDList()
             traci.vehicle.setColor(ids[self.id], (255, 0, 0))
             traci.vehicle.setSpeedMode(ids[self.id], 0)
             traci.vehicle.setSpeedFactor(ids[self.id], traci.vehicle.getSpeedFactor(ids[self.id]) - 0.1)
 
     def lane_anomaly(self):
-        if self.step % 100 > 20 and len(traci.vehicle.getIDList()) == 5:
+        if len(traci.vehicle.getIDList()) == 5:
+            self.flag = True
             ids = traci.vehicle.getIDList()
             traci.vehicle.changeLane(ids[self.id],
                                      (traci.vehicle.getLaneIndex(ids[self.id]) + 1 + random.randint(0, 1)) % 3,
@@ -182,7 +203,7 @@ class Simulator:
                         loss2 += l
                 loss2 /= 4
                 ids = traci.vehicle.getIDList()
-                if loss2 >= 0.0068:
+                if loss2 >= 0.0036:
                     traci.vehicle.highlight(ids[i], color=(255, 0, 0))
                 else:
                     traci.vehicle.highlight(ids[i], color=(0, 255, 0))
@@ -192,15 +213,15 @@ class Simulator:
             self.init_variables()
             traci.simulationStep()
             # self.lane_change()
-            # self.lane_anomaly()
-
-            if random.randint(0, 2) == 1:
-                self.under_speed()
-            else:
-                self.over_speed()
-            self.detect()
-            if self.w:
-                self.write()
+            # r = random.randint(0, 10)
+            # if r == 1:
+            #     self.under_speed()
+            # elif r == 2:
+            self.over_speed()
+            # elif r == 3:
+            #     self.lane_anomaly()
+            # self.detect()
+            self.log()
             self.step += 1
 
 

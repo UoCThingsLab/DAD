@@ -44,114 +44,19 @@ class DrivingDataset(Dataset):
 
     def load_set(self):
         raw_data = self.parser.read_txt()
-        for round in raw_data:
-            for i in range(2, len(round) - self.observe_len - self.label_len + 2):
-                seq = []
-                max_speed = 0
-                min_speed = 10000
-                max_x = -10000
-                min_x = 10000
-                max_y = -10000
-                min_y = 10000
-                max_d_x = -100000
-                min_d_x = 100000
-                max_dd_x = -100000
-                min_dd_x = 100000
-                max_d_y = -100000
-                min_d_y = 100000
-                max_dd_y = -100000
-                min_dd_y = 100000
-                for j in range(i, i + self.observe_len):
-                    for k in range(0, self.num_objects):
-                        if max_speed < round[j][0][k][self.speed_index]:
-                            max_speed = round[j][0][k][self.speed_index]
-                        if min_speed > round[j][0][k][self.speed_index]:
-                            min_speed = round[j][0][k][self.speed_index]
-
-                        if max_x < round[j][0][k][self.x_index]:
-                            max_x = round[j][0][k][self.x_index]
-                        if min_x > round[j][0][k][self.x_index]:
-                            min_x = round[j][0][k][self.x_index]
-                        if max_d_x < round[j][0][k][self.x_index] - round[j - 1][0][k][self.x_index]:
-                            max_d_x = round[j][0][k][self.x_index] - round[j - 1][0][k][self.x_index]
-                        if min_d_x > round[j][0][k][self.x_index] - round[j - 1][0][k][self.x_index]:
-                            min_d_x = round[j][0][k][self.x_index] - round[j - 1][0][k][self.x_index]
-                        if max_dd_x < (round[j][0][k][self.x_index] - round[j - 1][0][k][self.x_index]) - (
-                                round[j - 1][0][k][self.x_index] - round[j - 2][0][k][self.x_index]):
-                            max_dd_x = (round[j][0][k][self.x_index] - round[j - 1][0][k][self.x_index]) - (
-                                    round[j - 1][0][k][self.x_index] - round[j - 2][0][k][self.x_index])
-                        if min_dd_x > (round[j][0][k][self.x_index] - round[j - 1][0][k][self.x_index]) - (
-                                round[j - 1][0][k][self.x_index] - round[j - 2][0][k][self.x_index]):
-                            min_dd_x = (round[j][0][k][self.x_index] - round[j - 1][0][k][self.x_index]) - (
-                                    round[j - 1][0][k][self.x_index] - round[j - 2][0][k][self.x_index])
-
-                        if max_y < round[j][0][k][self.y_index]:
-                            max_y = round[j][0][k][self.y_index]
-                        if min_y > round[j][0][k][self.y_index]:
-                            min_y = round[j][0][k][self.y_index]
-                        if max_d_y < round[j][0][k][self.y_index] - round[j - 1][0][k][self.y_index]:
-                            max_d_y = round[j][0][k][self.y_index] - round[j - 1][0][k][self.y_index]
-                        if min_d_y > round[j][0][k][self.y_index] - round[j - 1][0][k][self.y_index]:
-                            min_d_y = round[j][0][k][self.y_index] - round[j - 1][0][k][self.y_index]
-                        if max_dd_y < (round[j][0][k][self.y_index] - round[j - 1][0][k][self.y_index]) - (
-                                round[j - 1][0][k][self.y_index] - round[j - 2][0][k][self.y_index]):
-                            max_dd_y = (round[j][0][k][self.y_index] - round[j - 1][0][k][self.y_index]) - (
-                                    round[j - 1][0][k][self.y_index] - round[j - 2][0][k][self.y_index])
-                        if min_dd_y > (round[j][0][k][self.y_index] - round[j - 1][0][k][self.y_index]) - (
-                                round[j - 1][0][k][self.y_index] - round[j - 2][0][k][self.y_index]):
-                            min_dd_y = (round[j][0][k][self.y_index] - round[j - 1][0][k][self.y_index]) - (
-                                    round[j - 1][0][k][self.y_index] - round[j - 2][0][k][self.y_index])
-                label = [[], [], [], [], []]
-                for j in range(i, i + self.observe_len):
-                    seq.append([
-                        [self.normalize((round[j][0][k][self.x_index] - round[j - 1][0][k][self.x_index]) - (
-                                round[j - 1][0][k][self.x_index] - round[j - 2][0][k][self.x_index]), max_dd_x,
-                                        min_dd_x)
-                         for k in
-                         range(0, self.num_objects)],
-                        [self.normalize(round[j][0][k][self.x_index] - round[j - 1][0][k][self.x_index], max_d_x,
-                                        min_d_x)
-                         for k in
-                         range(0, self.num_objects)],
-                        [self.normalize(round[j][0][k][self.x_index], max_x, min_x)
-                         for k in
-                         range(0, self.num_objects)],
-                        [self.normalize((round[j][0][k][self.y_index] - round[j - 1][0][k][self.y_index]) - (
-                                round[j - 1][0][k][self.y_index] - round[j - 2][0][k][self.y_index]), max_dd_y,
-                                        min_dd_y)
-                         for k in
-                         range(0, self.num_objects)],
-
-                        [self.normalize(round[j][0][k][self.y_index] - round[j - 1][0][k][self.y_index], max_d_y,
-                                        min_d_y)
-                         for k in
-                         range(0, self.num_objects)],
-                        [self.normalize(round[j][0][k][self.y_index], max_y, min_y)
-                         for k in
-                         range(0, self.num_objects)],
-                    ])
-                    for k in range(0, 5):
-                        label[k].append(self.normalize(round[j][0][k][self.speed_index], max_speed, min_speed))
-
-                        # j = i + self.observe_len + self.label_len
-                        # label = [
-                        #     [self.normalize(round[j][0][k][self.speed_index], max_speed, min_speed) for k in
-                        #      range(0, self.num_objects)],
-                        #     [self.normalize(round[j][0][k][self.x_index], max_x, min_x) for k in
-                        #      range(0, self.num_objects)],
-                        #     [self.normalize(round[j][0][k][self.y_index], max_y, min_y) for k in
-                        #      range(0, self.num_objects)]
-                        # ]
-
-                test = round[i + self.observe_len + self.label_len - 2][1]
-
-                seq = tensor(seq, device=self.device)
-                label = tensor(label, device=self.device)
-
-                self.set.append((seq, label, test, max_speed, min_speed))
+        b = []
+        for r in range(0, len(raw_data) - 5, 5):
+            min_len = 1000
+            for k in range(r, r + 5):
+                if len(raw_data[k][0]) < min_len:
+                    min_len = len(raw_data[k][0])
+            b.append([tensor(raw_data[k][0][:10], device=self.device) for k in range(r, r + 5)])
+            label = [raw_data[k][2][:10] for k in range(r, r + 5)]
+            self.set.append((b, raw_data[r][1], label))
+            b = []
 
     def __getitem__(self, index):
-        return self.set[self.start + index]
+        return self.set[index]
 
     def __len__(self):
         return min(self.end - self.start, len(self.set))

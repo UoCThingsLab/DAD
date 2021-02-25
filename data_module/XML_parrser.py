@@ -10,16 +10,16 @@ class XMLParser:
     def read_txt(self):
         f = open(self.address, 'r')
         a = []
-        d = []
         f.readline()
         for l in f.readlines():
-            if l == '\n':
-                a.append(d)
-                d = []
-            elif len(l.split(' ')) < 6:
-                pass
-            else:
-                d.append(([[float(j) for j in i.split(',')] for i in l.split(' ')[0:5]], float(l.split(' ')[5])))
+            if l != '\n':
+                d = l.strip().split(";")
+                r = d[0].strip().split(" ")
+                a.append(
+                    ([[float(r[i].split(",")[0]), float(r[i].split(",")[1]), float(r[i].split(",")[2])] for i in
+                      range(0, len(r))], float(d[1]),
+                     [float(r[i].split(",")[4]) for i in range(0, len(r))]
+                     ))
         return a
 
     def read_xml(self, start, end):
