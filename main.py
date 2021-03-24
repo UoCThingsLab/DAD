@@ -9,9 +9,9 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
 
 def main(hparams):
-    datamodule = DrivingDataMadule('v0.2', 5800, 176, 10000)
+    datamodule = DrivingDataMadule('train', 5800, 176, 10000)
 
-    test = True
+    test = False
 
     if test:
         model = Siamese.load_from_checkpoint(
