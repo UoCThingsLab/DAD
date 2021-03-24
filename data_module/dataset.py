@@ -45,13 +45,9 @@ class DrivingDataset(Dataset):
     def load_set(self):
         raw_data = self.parser.read_txt()
         b = []
-        for r in range(0, len(raw_data) - 5, 5):
-            min_len = 1000
-            for k in range(r, r + 5):
-                if len(raw_data[k][0]) < min_len:
-                    min_len = len(raw_data[k][0])
-            b.append([tensor(raw_data[k][0][:10], device=self.device) for k in range(r, r + 5)])
-            label = [raw_data[k][2][:10] for k in range(r, r + 5)]
+        for r in range(0, len(raw_data) - self.num_objects+1, self.num_objects):
+            b.append([tensor(raw_data[k][0], device=self.device) for k in range(r, r + self.num_objects)])
+            label = [raw_data[k][2] for k in range(r, r + self.num_objects)]
             self.set.append((b, raw_data[r][1], label))
             b = []
 
@@ -67,6 +63,7 @@ class DrivingDataMadule(pl.LightningDataModule):
         super().__init__()
         self.train_dataset_address = os.path.realpath('.') + f'/dataset/{version}/normal.output'
         self.test_dataset_address = os.path.realpath('.') + f'/dataset/{version}/abnormal.output'
+        self.validation_dataset_address = os.path.realpath('.') + f'/dataset/{version}/validation.output'
         self.train_len = train_len
         self.validate_len = validate_len
         self.test_len = test_len
@@ -80,8 +77,8 @@ class DrivingDataMadule(pl.LightningDataModule):
 
     def val_dataloader(self):
         return DataLoader(
-            DrivingDataset(address=self.train_dataset_address, start=self.train_len,
-                           end=self.train_len + self.validate_len,
+            DrivingDataset(address=self.validation_dataset_address, start=0,
+                           end=self.validate_len,
                            observe_len=self.observe_len, label_len=self.label_len),
             shuffle=False, num_workers=0, batch_size=1)
 

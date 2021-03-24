@@ -1,10 +1,13 @@
-from torch import nn, zeros, device, cat, tensor
+from torch import nn, zeros, device, cat, tensor, std
 from model.trash.LSTM import LSTM
-
+import torch
+from dtaidistance import dtw
+import numpy as np
+from tslearn.metrics import gak,dtw
 
 class Siamese(LSTM):
-    def __init__(self, hidden_layer_size=100, battle_neck=5, feature_len=3, observe_len=5, label_len=1,
-                 objects_len=3,
+    def __init__(self, hidden_layer_size=100, battle_neck=10, feature_len=1, observe_len=5, label_len=1,
+                 objects_len=5,
                  d=device('cuda'), *args,
                  **kwargs):
         super().__init__(hidden_layer_size, device, *args, **kwargs)
@@ -19,7 +22,7 @@ class Siamese(LSTM):
         # self.observe_len = observe_len
         self.label_len = label_len
         self.objects_len = objects_len
-        self.similarity = nn.CosineSimilarity(dim=0, eps=1e-6)
+        self.similarity = nn.CosineSimilarity(dim=0, eps=1e-7)
 
     def forward(self, batch):
         # LSTM 1
@@ -45,56 +48,73 @@ class Siamese(LSTM):
     def get_loss(self, x, y):
         return self.loss_function(x, y)
 
-    def training_step(self, batch, batch_idx):
+    def validation(self, batch):
         loss = 0
         decoded = []
         for j in range(0, self.objects_len):
             output, d = self(batch[0][0][j])
             decoded.append(d[0][0])
-            loss += self.loss_function(batch[0][0][j], output[j])
+            output = cat(output).view(self.feature_len * len(batch[0][0][j][0]))
+            list = batch[0][0][j][0].view(self.feature_len * len(batch[0][0][j][0]))
+            loss += self.loss_function(output, list)
         loss2 = 0
         for i in range(0, self.objects_len):
             for j in range(0, self.objects_len):
                 if i != j:
                     l = self.similarity(decoded[i], decoded[j])
-                    loss2 += -(l + 1)
-        loss = loss + loss2
+                    loss2 += (-l + 1)
+        loss = loss + (loss2 / 10)
+        return loss
+
+    def training_step(self, batch, batch_idx):
+        loss = self.validation(batch)
         self.log('train_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        loss = 0
-        decoded = []
-        for j in range(0, self.objects_len):
-            output, d = self(batch[0][0][j])
-            decoded.append(d[0][0])
-            loss += self.loss_function(batch[0][0][j], output[j])
-        loss2 = 0
-        for i in range(0, self.objects_len):
-            for j in range(0, self.objects_len):
-                if i != j:
-                    l = self.similarity(decoded[i], decoded[j])
-                    loss2 += -(l + 1)
-        loss = loss + loss2
+        loss = self.validation(batch)
         self.log('validation_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def test_step(self, batch, batch_idx):
-        decoded = []
-        maxSpeed = []
-
+        a = [0, 0, 0, 0, 0, 0]
+        d = [0, 0, 0, 0, 0, 0]
         for j in range(0, self.objects_len):
-            o, d = self(batch[0][0][j])
-            m = max(batch[2][0][j]).item()
-            maxSpeed.append(m)
-            decoded.append(d)
-        for i in range(0, self.objects_len):
-            loss = 0
-            for j in range(0, self.objects_len):
+            a[j] = np.array([batch[0][0][j][0][k].item() for k in range(len(batch[0][0][j][0]))])
+        for j in range(0, self.objects_len):
+            for i in range(0, self.objects_len):
                 if i != j:
-                    l = self.similarity(decoded[i][0][0], decoded[j][0][0])
-                    loss += (-1 * l) + 1
-            loss /= 4
-            self.evaluation_data.append(
-                (loss.item(), (maxSpeed[i] - batch[1]).item()))
+                    d[j] += gak(a[i], a[j])
+        for i in range(0, self.objects_len):
+            self.evaluation_data.append((d[i], 1 if batch[1].item() == i else 0))
+        # decoded = []
+        # maxSpeed = []
+        #
+        # for j in range(0, self.objects_len):
+        #     o, d = self(batch[0][0][j])
+        #     m = max(batch[2][0][j]).item()
+        #     maxSpeed.append(m)
+        #     decoded.append(d)
+        # o = []
+        # for i in range(0, self.objects_len):
+        #     loss = 0
+        #     for j in range(0, self.objects_len):
+        #         if i != j:
+        #             l = self.similarity(decoded[i][0][0], decoded[j][0][0])
+        #             loss += (-1 * l) + 1
+        #     o.append(loss)
+        # # ma = max(o)
+        # # mi = min(o)
+        # std = torch.std(tensor([o[j].item() for j in range(0, len(o))]))
+        # mean = torch.mean(tensor([o[j].item() for j in range(0, len(o))]))
+        # o2 = []
+        # # mo = 0
+        # for i in range(0, self.objects_len):
+        #     # mo += o[i].item()
+        #     o2.append(o[i])
+        #     o[i] = ((o[i] - std) / mean).item()
+        #     # o[i] = o[i].item()
+        # # mo /= self.objects_len
+        # for i in range(0, self.objects_len):
+        #     self.evaluation_data.append((o[i], 1 if batch[1].item() == i else 0))
             # self.evaluation_data.append((loss.item(), 1 if batch[2].item() == i else 0))

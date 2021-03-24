@@ -22,18 +22,18 @@ class Validator:
 
     def test(self, data):
         speed_err = 1
-        error = 1
+        error = 4
         tpr = []
         fpr = []
         best = (0, {})
-        while error >= 0:
+        while error >= -2:
             pred = []
             y = []
             for record in data:
                 d, e = record
                 pred.append(1 if d > error else 0)
-                y.append(1 if e > speed_err else 0)
-            error -= 0.05
+                y.append(1 if e else 0)
+            error -= 0.001
 
             pred = tensor(pred)
             y = tensor(y)
