@@ -16,7 +16,8 @@ import pytorch_lightning as pl
 
 class DrivingDataset(Dataset):
 
-    def __init__(self, address, start=0, end=10000, observe_len=10, label_len=1, num_objects=5, d=device('cuda')):
+    def __init__(self, address, start=0, end=10000, observe_len=10, label_len=1, num_objects=5, d=device('cuda'),
+                 validation=False):
         self.parser = XMLParser(address)
         self.start = start
         self.end = end
@@ -37,6 +38,8 @@ class DrivingDataset(Dataset):
         self.max_y = 50.60
         self.min_y = 44.20
         self.l_index = 3
+
+        self.validation = validation
         self.load_set()
 
     def normalize(self, d, max, min):
@@ -45,25 +48,31 @@ class DrivingDataset(Dataset):
     def load_set(self):
         raw_data = self.parser.read_txt()
         b = []
-        for r in range(0, len(raw_data) - self.num_objects+1, self.num_objects):
+        for r in range(0, len(raw_data) - self.num_objects + 1, self.num_objects):
             b.append([tensor(raw_data[k][0], device=self.device) for k in range(r, r + self.num_objects)])
             label = [raw_data[k][2] for k in range(r, r + self.num_objects)]
             self.set.append((b, raw_data[r][1], label))
             b = []
 
     def __getitem__(self, index):
-        return self.set[index]
+        if self.validation:
+            return self.set[10 * index]
+        else:
+            return self.set[index]
 
     def __len__(self):
-        return min(self.end - self.start, len(self.set))
+        if self.validation:
+            return int(len(self.set) / 10)
+        else:
+            return len(self.set)
 
 
 class DrivingDataMadule(pl.LightningDataModule):
     def __init__(self, version, train_len, validate_len, test_len, observe_len=5, label_len=1):
         super().__init__()
-        self.train_dataset_address = os.path.realpath('.') + f'/dataset/{version}/train.txt'
-        self.test_dataset_address = os.path.realpath('.') + f'/dataset/{version}/abnormal.output'
-        self.validation_dataset_address = os.path.realpath('.') + f'/dataset/{version}/validate.txt'
+        self.train_dataset_address = os.path.realpath('.') + f'/dataset/train/{version}'
+        self.test_dataset_address = os.path.realpath('.') + f'/dataset/test/{version}'
+        self.validation_dataset_address = os.path.realpath('.') + f'/dataset/train/{version}'
         self.train_len = train_len
         self.validate_len = validate_len
         self.test_len = test_len
@@ -79,7 +88,7 @@ class DrivingDataMadule(pl.LightningDataModule):
         return DataLoader(
             DrivingDataset(address=self.validation_dataset_address, start=0,
                            end=self.validate_len,
-                           observe_len=self.observe_len, label_len=self.label_len),
+                           observe_len=self.observe_len, label_len=self.label_len, validation=True),
             shuffle=False, num_workers=0, batch_size=1)
 
     def test_dataloader(self):

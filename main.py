@@ -9,13 +9,13 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
 
 def main(hparams):
-    datamodule = DrivingDataMadule('train', 5800, 176, 10000)
+    datamodule = DrivingDataMadule('v0.5', 5800, 176, 10000)
 
-    test = False
+    test = True
 
     if test:
         model = Siamese.load_from_checkpoint(
-            "lightning_logs/version_19/checkpoints/LSTMEncoderLSTM--v_num=00-epoch=100-validation_loss=0.00028-train_loss=0.00067.ckpt"
+            "lightning_logs/version_29/checkpoints/LSTMEncoderLSTM--v_num=00-epoch=93-validation_loss=0.00023-train_loss=0.00084.ckpt"
         )
     else:
         model = Siamese()
@@ -26,7 +26,7 @@ def main(hparams):
     )
     early_callback = EarlyStopping(monitor='validation_loss')
 
-    trainer = pl.Trainer(gpus=-1, max_epochs=1000, accelerator='dp',
+    trainer = pl.Trainer(gpus=-1, max_epochs=100, accelerator='dp',
                          callbacks=[LSTMCallback(), checkpoint_callback],
                          num_nodes=1)
     if test:

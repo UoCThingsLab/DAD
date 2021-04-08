@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 class Simulator:
 
-    def __init__(self, address='../dataset/train/3.txt', w=True):
+    def __init__(self, address='../dataset/test/v0.3', w=True):
         self.step = 0
         self.end = 100000
         self.vehicles = 5
@@ -86,7 +86,7 @@ class Simulator:
                 x = traci.vehicle.getPosition(id)[0]
                 y = traci.vehicle.getPosition(id)[1]
                 s = traci.vehicle.getSpeed(id)
-                self.x[i].append((x + 100) / 500)
+                self.x[i].append(x)
                 self.y[i].append((y - 292.0) / 6.4)
                 if s > 0.001:
                     self.s[i].append(s)
@@ -104,12 +104,11 @@ class Simulator:
             ids = traci.vehicle.getIDList()
             traci.vehicle.setColor(ids[self.id], (255, 0, 0))
             traci.vehicle.setSpeedMode(ids[self.id], 0)
-            # traci.vehicle.setSpeedFactor(ids[self.id], traci.vehicle.getSpeedFactor(0))
+            traci.vehicle.setSpeedFactor(ids[self.id], traci.vehicle.getSpeedFactor(ids[self.id]) + 0.2)
             # traci.vehicle.setSpeedFactor(ids[1], traci.vehicle.getSpeedFactor(ids[1]) + 0.2)
             # traci.vehicle.setSpeedFactor(ids[2], traci.vehicle.getSpeedFactor(ids[2]) + 0.2)
             # traci.vehicle.setSpeedFactor(ids[3], traci.vehicle.getSpeedFactor(ids[3]) + 0.2)
             # traci.vehicle.setSpeedFactor(ids[4], traci.vehicle.getSpeedFactor(ids[4]) + 0.2)
-            # traci.vehicle.setSpeedMode(ids[0], 0)
             # traci.vehicle.setSpeedMode(ids[1], 0)
             # traci.vehicle.setSpeedMode(ids[2], 0)
             # traci.vehicle.setSpeedMode(ids[3], 0)
@@ -120,26 +119,19 @@ class Simulator:
         if self.step % 100 == 20 and len(traci.vehicle.getIDList()) == self.vehicles:
             ids = traci.vehicle.getIDList()
             traci.vehicle.setColor(ids[self.id], (255, 0, 0))
-            # traci.vehicle.setSpeedMode(ids[self.id], 0)
-            # traci.vehicle.setSpeedFactor(ids[self.id], traci.vehicle.getSpeedFactor(0))
-            traci.vehicle.setSpeedMode(ids[0], 0)
-            traci.vehicle.setSpeedMode(ids[1], 0)
-            traci.vehicle.setSpeedMode(ids[2], 0)
-            traci.vehicle.setSpeedMode(ids[3], 0)
-            traci.vehicle.setSpeedMode(ids[4], 0)
-            traci.vehicle.setSpeedFactor(ids[0], traci.vehicle.getSpeedFactor(ids[0]) - 0.2)
-            traci.vehicle.setSpeedFactor(ids[1], traci.vehicle.getSpeedFactor(ids[1]) - 0.2)
-            traci.vehicle.setSpeedFactor(ids[2], traci.vehicle.getSpeedFactor(ids[2]) - 0.2)
-            traci.vehicle.setSpeedFactor(ids[3], traci.vehicle.getSpeedFactor(ids[3]) - 0.2)
-            traci.vehicle.setSpeedFactor(ids[4], traci.vehicle.getSpeedFactor(ids[4]) - 0.2)
-            # self.flag = True
+            traci.vehicle.setSpeedMode(ids[self.id], 0)
+            self.flag = True
 
     def under_speed(self):
         if self.step % 100 == 20 and len(traci.vehicle.getIDList()) == self.vehicles:
             ids = traci.vehicle.getIDList()
             traci.vehicle.setColor(ids[self.id], (255, 0, 0))
-            # traci.vehicle.setSpeedMode(ids[self.id], 0)
-            traci.vehicle.setSpeedFactor(ids[self.id], traci.vehicle.getSpeedFactor(ids[self.id]) - 0.1)
+            traci.vehicle.setSpeedFactor(ids[self.id], traci.vehicle.getSpeedFactor(ids[self.id]) - 0.2)
+            # traci.vehicle.setSpeedMode(ids[0], 0)
+            # traci.vehicle.setSpeedMode(ids[1], 0)
+            # traci.vehicle.setSpeedMode(ids[2], 0)
+            # traci.vehicle.setSpeedMode(ids[3], 0)
+            # traci.vehicle.setSpeedMode(ids[4], 0)
             self.flag = True
 
     def lane_anomaly(self):
@@ -241,20 +233,31 @@ class Simulator:
                 else:
                     traci.vehicle.highlight(ids[i], color=(0, 255, 0))
 
+    def no_stop(self):
+        if len(traci.vehicle.getIDList()) == self.vehicles:
+            ids = traci.vehicle.getIDList()
+            traci.vehicle.setSpeedMode(ids[0], 0)
+            traci.vehicle.setSpeedMode(ids[1], 0)
+            traci.vehicle.setSpeedMode(ids[2], 0)
+            traci.vehicle.setSpeedMode(ids[3], 0)
+            traci.vehicle.setSpeedMode(ids[4], 0)
+
     def run(self):
         while self.step < self.end:
             self.init_variables()
             traci.simulationStep()
             # self.lane_change()
-            # r = random.randint(0, self.vehicles)
-            # if r == 1:
-            #     self.over_speed()
-            # elif r == 3:
-            #     self.under_speed()
-            # if r == 2:
-            #     self.over_speed()
+
+            self.no_stop()
+            r = random.randint(0, 10)
+            if r == 1:
+                self.under_speed()
+            elif r == 3:
+                self.under_speed()
+            if r == 2:
+                self.under_speed()
             # else:
-            self.speed_class()
+            # self.speed_class()
             # self.detect()
             self.log()
             self.step += 1

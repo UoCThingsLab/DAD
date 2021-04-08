@@ -1,9 +1,10 @@
+import numpy as np
 from torch import nn, zeros, device, cat, tensor, std
+from tslearn.metrics import gak
+
 from model.trash.LSTM import LSTM
 import torch
-from dtaidistance import dtw
-import numpy as np
-from tslearn.metrics import gak,dtw
+
 
 class Siamese(LSTM):
     def __init__(self, hidden_layer_size=100, battle_neck=10, feature_len=1, observe_len=5, label_len=1,
@@ -52,11 +53,11 @@ class Siamese(LSTM):
         loss = 0
         decoded = []
         for j in range(0, self.objects_len):
-            output, d = self(batch[0][0][j])
+            output, d = self((2 * batch[0][0][j] - 300) / 500)
             decoded.append(d[0][0])
             output = cat(output).view(self.feature_len * len(batch[0][0][j][0]))
             list = batch[0][0][j][0].view(self.feature_len * len(batch[0][0][j][0]))
-            loss += self.loss_function(output, list)
+            loss += self.loss_function(output, (2 * list - 300) / 500)
         loss2 = 0
         for i in range(0, self.objects_len):
             for j in range(0, self.objects_len):
@@ -80,7 +81,7 @@ class Siamese(LSTM):
         a = [0, 0, 0, 0, 0, 0]
         d = [0, 0, 0, 0, 0, 0]
         for j in range(0, self.objects_len):
-            a[j] = np.array([batch[0][0][j][0][k].item() for k in range(len(batch[0][0][j][0]))])
+            a[j] = np.array([(batch[0][0][j][0][k].item()-300)/500 for k in range(len(batch[0][0][j][0]))])
         for j in range(0, self.objects_len):
             for i in range(0, self.objects_len):
                 if i != j:
@@ -91,7 +92,7 @@ class Siamese(LSTM):
         # maxSpeed = []
         #
         # for j in range(0, self.objects_len):
-        #     o, d = self(batch[0][0][j])
+        #     o, d = self((2 * batch[0][0][j] - 300) / 500)
         #     m = max(batch[2][0][j]).item()
         #     maxSpeed.append(m)
         #     decoded.append(d)
@@ -117,4 +118,4 @@ class Siamese(LSTM):
         # # mo /= self.objects_len
         # for i in range(0, self.objects_len):
         #     self.evaluation_data.append((o[i], 1 if batch[1].item() == i else 0))
-            # self.evaluation_data.append((loss.item(), 1 if batch[2].item() == i else 0))
+        #     # self.evaluation_data.append((loss.item(), 1 if batch[2].item() == i else 0))
