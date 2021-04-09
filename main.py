@@ -6,19 +6,23 @@ from model.Siamese import Siamese
 from model.callbacks.lstm_callback import LSTMCallback
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+import optparse
 
 
 def main(hparams):
-    datamodule = DrivingDataMadule('v0.5', 5800, 176, 10000)
-
-    test = True
+    bottelNeck = int(hparams[0].hidden)
+    lamda = float(hparams[0].lamda)
+    ds = hparams[0].ds
+    test = bool(hparams[0].test)
+    print(bottelNeck, lamda, ds, test)
+    datamodule = DrivingDataMadule(ds, 5800, 176, 10000)
 
     if test:
         model = Siamese.load_from_checkpoint(
-            "lightning_logs/version_29/checkpoints/LSTMEncoderLSTM--v_num=00-epoch=93-validation_loss=0.00023-train_loss=0.00084.ckpt"
+            "checkpoint/lightning_logs/version_9186894/checkpoints/LSTMEncoderLSTM--v_num=00-epoch=97-validation_loss=0.00022-train_loss=0.00069.ckpt"
         )
     else:
-        model = Siamese()
+        model = Siamese(battle_neck=bottelNeck, lamda=lamda)
 
     checkpoint_callback = ModelCheckpoint(
         monitor='validation_loss',
@@ -36,9 +40,19 @@ def main(hparams):
 
 
 if __name__ == '__main__':
-    root_dir = os.path.dirname(os.path.realpath(__file__))
-    parent_parser = ArgumentParser(add_help=False)
-    hyperparams = parent_parser.parse_args()
-
+    parser = optparse.OptionParser()
+    parser.add_option('-H', '--hidden',
+                      action="store", dest="hidden",
+                      help="Hidden State Size", default=10)
+    parser.add_option('-l', '--lambda',
+                      action="store", dest="lamda",
+                      help="lambda", default=10)
+    parser.add_option('-d', '--dataset',
+                      action="store", dest="ds",
+                      help="Dataset", default="v0.5")
+    parser.add_option('-t', '--test',
+                      action="store", dest="test",
+                      help="Test", default=False)
+    hyperparams = parser.parse_args()
     # TRAIN
     main(hyperparams)
