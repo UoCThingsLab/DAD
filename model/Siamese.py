@@ -1,9 +1,10 @@
 import numpy as np
 from torch import nn, zeros, device, cat, tensor, std
 from tslearn.metrics import gak
-
+from dtaidistance import dtw
 from model.trash.LSTM import LSTM
 import torch
+from sklearn.ensemble import IsolationForest
 
 
 class Siamese(LSTM):
@@ -80,44 +81,56 @@ class Siamese(LSTM):
         return loss
 
     def test_step(self, batch, batch_idx):
-        # a = [0, 0, 0, 0, 0, 0]
-        # d = [0, 0, 0, 0, 0, 0]
-        # for j in range(0, self.objects_len):
-        #     a[j] = np.array([(batch[0][0][j][0][k].item()-300)/500 for k in range(len(batch[0][0][j][0]))])
-        # for j in range(0, self.objects_len):
-        #     for i in range(0, self.objects_len):
-        #         if i != j:
-        #             d[j] += gak(a[i], a[j])
-        # for i in range(0, self.objects_len):
-        #     self.evaluation_data.append((d[i], 1 if batch[1].item() == i else 0))
-        decoded = []
-        maxSpeed = []
-
+        a = [0, 0, 0, 0, 0, 0]
+        d = [0, 0, 0, 0, 0, 0]
         for j in range(0, self.objects_len):
-            o, d = self((2 * batch[0][0][j] - 300) / 500)
-            m = max(batch[2][0][j]).item()
-            maxSpeed.append(m)
-            decoded.append(d)
-        o = []
-        for i in range(0, self.objects_len):
-            loss = 0
-            for j in range(0, self.objects_len):
+            a[j] = np.array([(batch[0][0][j][0][k].item()-300)/500 for k in range(len(batch[0][0][j][0]))])
+        for j in range(0, self.objects_len):
+            for i in range(0, self.objects_len):
                 if i != j:
-                    l = self.similarity(decoded[i][0][0], decoded[j][0][0])
-                    loss += (-1 * l) + 1
-            o.append(loss)
-        # ma = max(o)
-        # mi = min(o)
-        std = torch.std(tensor([o[j].item() for j in range(0, len(o))]))
-        mean = torch.mean(tensor([o[j].item() for j in range(0, len(o))]))
-        o2 = []
-        # mo = 0
+                    d[j] += gak(a[i], a[j])
         for i in range(0, self.objects_len):
-            # mo += o[i].item()
-            o2.append(o[i])
-            o[i] = ((o[i] - std) / mean).item()
-            # o[i] = o[i].item()
-        # mo /= self.objects_len
-        for i in range(0, self.objects_len):
-            self.evaluation_data.append((o[i], 1 if batch[1].item() == i else 0))
-            # self.evaluation_data.append((loss.item(), 1 if batch[2].item() == i else 0))
+            self.evaluation_data.append((4 - d[i], 1 if batch[1].item() == i else 0))
+
+        # a = [0, 0, 0, 0, 0, 0]
+        # min = 1000
+        # for j in range(0, self.objects_len):
+        #     a[j] = np.array([(batch[0][0][j][0][k].item() - 300) / 500 for k in range(len(batch[0][0][j][0]))])
+        #     if len(a[j]) < min:
+        #         min = len(a[j])
+        # i = IsolationForest(random_state=0).fit([a[0][:min], a[1][:min], a[2][:min], a[3][:min], a[4][:min]])
+        # i = i.score_samples([a[0][:min], a[1][:min], a[2][:min], a[3][:min], a[4][:min]])
+        # for j in range(0, self.objects_len):
+        #     self.evaluation_data.append((-i[j], 1 if batch[1].item() == j else 0))
+
+        # decoded = []
+        # maxSpeed = []
+        #
+        # for j in range(0, self.objects_len):
+        #     o, d = self((2 * batch[0][0][j] - 300) / 500)
+        #     m = max(batch[2][0][j]).item()
+        #     maxSpeed.append(m)
+        #     decoded.append(d)
+        # o = []
+        # for i in range(0, self.objects_len):
+        #     loss = 0
+        #     for j in range(0, self.objects_len):
+        #         if i != j:
+        #             l = self.similarity(decoded[i][0][0], decoded[j][0][0])
+        #             loss += (-1 * l) + 1
+        #     o.append(loss)
+        # # ma = max(o)
+        # # mi = min(o)
+        # std = torch.std(tensor([o[j].item() for j in range(0, len(o))]))
+        # mean = torch.mean(tensor([o[j].item() for j in range(0, len(o))]))
+        # o2 = []
+        # # mo = 0
+        # for i in range(0, self.objects_len):
+        #     # mo += o[i].item()
+        #     o2.append(o[i])
+        #     o[i] = ((o[i] - std) / mean).item()
+        #     # o[i] = o[i].item()
+        # # mo /= self.objects_len
+        # for i in range(0, self.objects_len):
+        #     self.evaluation_data.append((o[i], 1 if batch[1].item() == i else 0))
+        #     # self.evaluation_data.append((loss.item(), 1 if batch[2].item() == i else 0))

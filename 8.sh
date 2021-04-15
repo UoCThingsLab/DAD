@@ -9,4 +9,4 @@
 #SBATCH --mail-type=REQUEUE
 #SBATCH --mail-type=ALL
 
-python3 main.py -H 16 -l 10 -d 0.11
+python3 main.py -H 10 -l 10 -d 0.11
