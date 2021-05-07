@@ -10,16 +10,16 @@ class XMLParser:
     def read_txt(self):
         f = open(self.address, 'r')
         a = []
-        for l in f.readlines():
+        b = []
+        lines = f.readlines()
+        for k in range(0, len(lines)):
+            l = lines[k]
             if l != '\n':
                 d = l.strip().split(";")
                 r = d[0].strip().split(" ")
-                a.append(
-                    ([[float(r[i].split(",")[0])] for i in
-                      range(0, len(r))], float(d[1]),
-                     [float(r[i].split(",")[4]) for i in range(0, len(r))]
-                     ))
-        return a
+                a.append([[float(r[i].split(",")[1])] for i in range(0, len(r))])
+                b.append(float(d[1]))
+        return a, b
 
     def read_xml(self, start, end):
         print(f"read time step {start} to {end}")

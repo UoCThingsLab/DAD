@@ -19,7 +19,7 @@ def main(hparams):
     datamodule = DrivingDataMadule(ds, 5800, 176, 10000)
 
     for filename in os.listdir("checkpoint"):
-        if filename in ["b6l10d9"]:
+        if filename in ["b20l10d15"]:
             for c in os.listdir(f'checkpoint/{filename}/checkpoints'):
                 print(f'{filename}/{c}')
                 bottelNeck = int(re.search(r"b(.*?)l", filename).group(1))
@@ -39,7 +39,7 @@ def main(hparams):
                 )
                 early_callback = EarlyStopping(monitor='validation_loss')
 
-                trainer = pl.Trainer(gpus=-1, max_epochs=100, accelerator='dp',
+                trainer = pl.Trainer(gpus=1, max_epochs=100, accelerator='dp',
                                      callbacks=[LSTMCallback(name=f'b{bottelNeck}l{lamda}{ds.group()}'),
                                                 checkpoint_callback],
                                      num_nodes=1)

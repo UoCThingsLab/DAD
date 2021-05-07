@@ -46,12 +46,12 @@ class DrivingDataset(Dataset):
         return (d - min) / (max - min)
 
     def load_set(self):
-        raw_data = self.parser.read_txt()
+        raw_data, labels = self.parser.read_txt()
         b = []
         for r in range(0, len(raw_data) - self.num_objects + 1, self.num_objects):
-            b.append([tensor(raw_data[k][0], device=self.device) for k in range(r, r + self.num_objects)])
-            label = [raw_data[k][2] for k in range(r, r + self.num_objects)]
-            self.set.append((b, raw_data[r][1], label))
+            b.append([tensor(raw_data[k], device=self.device) for k in range(r, r + self.num_objects)])
+            label = [labels[k] for k in range(r, r + self.num_objects)]
+            self.set.append((b, label))
             b = []
 
     def __getitem__(self, index):
@@ -64,7 +64,7 @@ class DrivingDataset(Dataset):
         if self.validation:
             return int(len(self.set) / 10)
         else:
-            return len(self.set)
+            return int(len(self.set))
 
 
 class DrivingDataMadule(pl.LightningDataModule):
